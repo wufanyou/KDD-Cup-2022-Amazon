@@ -1,0 +1,89 @@
+#seed: 2022
+total_fold: 2
+fold: 0 # 0 1 2 
+task: '2'
+train_all: false
+  
+dataset:
+  version: Task2DatasetConCat
+  used_col:
+    - product_title
+    - product_id
+    - index
+    - product_brand
+    - product_color_name
+    - product_bullet_point
+    
+lighting:
+  version: ConcatLightingModule
+  
+tokenizer:
+  use_fast: false
+  
+clean:
+  product_catalogue: 
+    product_title: DeBertaCleanV2 # DeBertaClean (cased) DeBertaCleanV2(uncased)
+    product_description: DeBertaCleanV2 # DeBertaClean
+    product_bullet_point: DeBertaCleanV2 # DeBertaClean
+    product_brand: DeBertaCleanV2 # DeBertaClean
+    product_color_name: DeBertaCleanV2 # DeBertaClean
+  query: DeBertaCleanV2 # DeBertaClean
+
+prepare:
+  train: prepare_train_all # prepare_train prepare_train_all
+  
+model:
+  name: valhalla/distilbart-mnli-12-3  # model from hugging face
+  architecture: CrossEncoderConcat
+  architecture_args:
+    num_text_types: 7  # len(dataset.used_col) + 1
+    extra_feats_num: 1 # in which dataset
+    linear_hidden_size: 128
+    require_token_id: false
+  encode:
+    query: 48360 # query  [1] [query] .... [2] [title] .... [2]
+    product_title: 14691   # title
+    product_id: 2688 # ASIN
+    index: 45673 # index
+    product_description: 41602 # description
+    product_bullet_point: 47977 # summary
+    product_brand: 42452 # brand
+    product_color_name: 44287 # Color
+
+optimizer:
+  version: "transformers.AdamW"
+  weight_decay: 0.01
+  args:
+    lr: 2e-5 # learning rate 1e-5 ... 1e-6
+  scheduler:
+    use: true
+    version: cosine_with_hard_restarts_schedule_with_warmup
+    args:
+      num_warmup_steps: 1000 # 500 1000
+      num_training_steps: 15000 # len(dataset)/batch_size/ngpu * max_epochs
+      num_cycles: 1 # 1 2 
+  
+
+
+dataloader:
+  batch_size: 
+    train: 12 # need test
+    val: 12 # need test
+    test: 8
+  num_workers: 32
+
+experiment:
+  saver:
+    save_top_k: 2
+    mode: "max"
+
+trainer:
+  gpus: 2 # 2080 4 3090 2
+  auto_select_gpus: true
+  max_epochs: 1 # 1...5
+  val_check_interval: 0.5 # 1.0 float (interval)
+  accumulate_grad_batches: 2
+  precision: bf16 # half precision 3090 (bf16) 2080(16)
+  amp_backend: native # half precision
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: norm

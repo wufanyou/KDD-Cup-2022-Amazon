@@ -1,0 +1,88 @@
+total_fold: 2
+fold: 0
+#train_all: true
+
+disk:
+  kd: ["/data/kdd2022/amazon/submission/deberta-large.csv"]
+loss:
+  kd_weights: [0.3, 0.7]    # label, distilbart, cocolm
+  
+dataset:
+  version: KDTask2DatasetConCat
+  used_col:
+    - product_title
+    - product_id
+    - index
+    - product_brand
+    - product_color_name
+    - product_bullet_point
+    - product_description
+    
+lighting:
+  version: KDConcatLightingModuleV2
+tokenizer:
+  use_fast: false
+
+clean:
+  product_catalogue: 
+    product_title: DeBertaCleanV2
+    product_description: DeBertaCleanV2
+    product_bullet_point: DeBertaCleanV2
+    product_brand: DeBertaCleanV2
+    product_color_name: DeBertaCleanV2
+  query: DeBertaCleanV2
+
+prepare:
+  train: prepare_train_all
+  
+model:
+  name: microsoft/deberta-v3-base
+  architecture: CrossEncoderConcat
+  architecture_args:
+    num_text_types: 8
+    linear_hidden_size: 128
+  encode:
+    query: 7236
+    product_title: 1650   # title
+    product_id: 77340 # ASIN
+    index: 3884 # index
+    product_description: 3175 # description
+    product_bullet_point: 5310 # summary
+    product_brand: 1224 # brand
+    product_color_name: 1163 # color
+
+optimizer:
+  version: "transformers.AdamW"
+  weight_decay: 0.01
+  args:
+    lr: 1e-5
+  scheduler:
+    use: true
+    version: cosine_with_hard_restarts_schedule_with_warmup
+    args:
+      num_warmup_steps: 500
+      num_training_steps: 40000
+      num_cycles: 1
+
+
+dataloader:
+  batch_size: 
+    train: 20
+    val: 20
+    test: 16
+  num_workers: 32
+
+experiment:
+  saver:
+    save_top_k: 2
+    mode: "max"
+
+trainer:
+  gpus: 2
+  auto_select_gpus: true
+  max_epochs: 2
+  val_check_interval: 1.0 # check val 20% of epoch
+  precision: bf16
+  amp_backend: native
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: norm

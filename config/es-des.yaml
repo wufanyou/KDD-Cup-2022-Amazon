@@ -1,0 +1,87 @@
+task: "2"
+locale: "es"
+total_fold: 2
+fold: 0
+train_all: false
+seed: 2022
+
+dataset:
+  version: Task2DatasetConCat
+  used_col:
+    - product_title
+    - product_id
+    - index
+    - product_brand
+    - product_color_name
+    - product_bullet_point
+    - product_description
+    
+lighting:
+  version: ConcatLightingModule
+tokenizer:
+  use_fast: false
+  
+model:
+  name: microsoft/mdeberta-v3-base
+  architecture: CrossEncoderConcat
+  architecture_args:
+    num_text_types: 8
+    linear_hidden_size: 128
+  encode:
+    query: 22446 # consulta
+    product_title: 10332   # title
+    product_description: 80482 # description
+    product_bullet_point: 22504 # destacar
+    product_brand: 5504 # marca
+    product_color_name: 6776 # color
+    index: 39269 # Index
+    product_id: 2531 # ID
+    
+prepare:
+  train: prepare_train_all
+  
+clean:
+  product_catalogue: 
+    product_title: ESclean
+    product_description: ESclean
+    product_bullet_point: ESclean
+    product_brand: ESclean
+    product_color_name: ESclean
+  query: ESclean
+    
+optimizer:
+  version: "transformers.AdamW"
+  weight_decay: 0.01
+  args:
+    lr: 2e-5
+  scheduler:
+    use: true
+    version: cosine_with_hard_restarts_schedule_with_warmup
+    args:
+      num_warmup_steps: 300
+      num_training_steps: 7500
+      num_cycles: 1
+    
+dataloader:
+  batch_size: 
+    train: 20
+    val: 20
+    test: 8
+  num_workers: 12
+
+experiment:
+  saver:
+    save_top_k: 2
+    mode: "max"
+
+trainer:
+  gpus: 2
+  auto_select_gpus: true
+  max_epochs: 2
+  val_check_interval: 0.5 # check val 20% of epoch
+  precision: bf16
+  amp_backend: native
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: norm
+
+

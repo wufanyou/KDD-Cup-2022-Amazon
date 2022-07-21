@@ -1,0 +1,90 @@
+seed: 2022
+task: "2"
+locale: "us"
+total_fold: 2
+fold: 0
+train_all: true
+val_all: true
+
+dataset:
+  version: Task2DatasetConCat
+  used_col:
+    - product_title
+    - product_id
+    - index
+    - product_brand
+    - product_color_name
+    - product_bullet_point
+    - product_description
+lighting:
+  version: ConcatLightingModule
+tokenizer:
+  use_fast: false
+
+model:
+  name: google/bigbird-roberta-large
+  architecture: CrossEncoderConcat
+  max_length: 512 # 1024 if description is added.
+  architecture_args:
+    num_text_types: 8
+    linear_hidden_size: 128
+  encode:
+    query: 12506 
+    product_title: 3771 
+    product_description: 6865 
+    product_bullet_point: 10739 
+    product_brand: 4609 
+    product_color_name: 3225
+    product_id: 4787 
+    index: 6477 
+  
+prepare:
+  train: prepare_train_all
+
+clean:
+  product_catalogue: 
+    product_title: DeBertaCleanV2
+    product_description: DeBertaCleanV2
+    product_bullet_point: DeBertaCleanV2
+    product_brand: DeBertaCleanV2
+    product_color_name: DeBertaCleanV2
+  query: DeBertaCleanV2
+  
+optimizer:
+  version: "transformers.AdamW"
+  weight_decay: 0.01
+  args:
+    lr: 1e-5
+  scheduler:
+    use: true
+    version: cosine_with_hard_restarts_schedule_with_warmup
+    args:
+      num_warmup_steps: 500
+      num_training_steps: 60000 #1399056
+      num_cycles: 1
+  
+    
+dataloader:
+  batch_size: 
+    train: 6 #
+    val: 6 #
+    test: 8
+  num_workers: 20
+
+experiment:
+  saver:
+    save_top_k: 2
+    mode: "max"
+
+trainer:
+  gpus: 2
+  auto_select_gpus: true
+  max_epochs: 1
+  val_check_interval: 1.0 
+  precision: bf16
+  amp_backend: native
+  accumulate_grad_batches: 2
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: norm
+
+

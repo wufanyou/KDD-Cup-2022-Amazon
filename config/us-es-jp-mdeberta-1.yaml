@@ -1,0 +1,92 @@
+seed: 2022
+task: "2"
+locale: "us"
+total_fold: 2
+fold: 1
+train_all: false
+locale_all: true
+other_cfg: 
+  - config/us-mdeberta.yaml
+  - config/es-2-fold-0.yaml
+  - config/jp-2-fold-0.yaml
+  
+  
+dataset:
+  version: Task2DatasetConCat
+  used_col:
+    - product_title
+    - product_id
+    - index
+    - product_brand
+    - product_color_name
+    - product_bullet_point
+    
+lighting:
+  version: ConcatLightingModule
+tokenizer:
+  use_fast: false
+
+model:
+  name: microsoft/mdeberta-v3-base 
+  architecture: CrossEncoderConcat
+  architecture_args:
+    num_text_types: 7
+    linear_hidden_size: 128
+  encode:
+    query: 35484 
+    product_title: 10332 
+    product_description: 11153 
+    product_bullet_point: 36173 
+    product_brand: 9195 
+    product_color_name: 6776
+    product_id: 2531 
+    index: 39269 
+  
+prepare:
+  train: prepare_train_all
+
+clean:
+  product_catalogue: 
+    product_title: JSClean
+    product_description: JSClean
+    product_bullet_point: JSClean
+    product_brand: JSClean
+    product_color_name: JSClean
+  query: JSClean
+  
+optimizer:
+  version: "transformers.AdamW"
+  weight_decay: 0.01
+  args:
+    lr: 2e-5
+  scheduler:
+    use: true
+    version: cosine_with_hard_restarts_schedule_with_warmup
+    args:
+      num_warmup_steps: 500
+      num_training_steps: 28000
+      num_cycles: 1
+  
+    
+dataloader:
+  batch_size: 
+    train: 20
+    val: 20
+    test: 8
+  num_workers: 20
+
+experiment:
+  saver:
+    save_top_k: 2
+    mode: "max"
+
+trainer:
+  gpus: 2
+  auto_select_gpus: true
+  max_epochs: 1
+  val_check_interval: 1.0 # check val 20% of epoch
+  precision: bf16
+  amp_backend: native
+  gradient_clip_val: 1.0
+  gradient_clip_algorithm: norm
+

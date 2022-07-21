@@ -1,0 +1,95 @@
+seed: 9530
+total_fold: 2
+fold: 0
+train_all: false
+
+# disk:
+#   kd: ["/home/omnisky/Desktop/amazon/submission/cocolm-large-des.csv"]
+#   data_dir: "/home/omnisky/Desktop/amazon/data/"
+#   model_dir: "/home/omnisky/Desktop/amazon/checkpoint/"
+#   output_dir: "/home/omnisky/Desktop/amazon/output/"
+#   submission_dir: "/home/omnisky/Desktop/amazon/submission/"
+#   local_dir: "/home/omnisky/Desktop/amazon/output/"
+#   product_catalogue: "product_catalogue-v0.3.csv.zip"
+#   train: "train-v0.3.csv.zip"
+#   test: "test_public-v0.3.csv.zip"
+loss:
+  kd_weights: [0.5, 0.5]    # label, distilbart, cocolm
+  
+dataset:
+  version: KDTask2DatasetConCat
+  used_col:
+    - product_title
+    - product_id
+    - index
+    - product_brand
+    - product_color_name
+    - product_bullet_point
+    - product_description
+    
+lighting:
+  version: KDConcatLightingModuleV2
+tokenizer:
+  use_fast: false
+  
+clean:
+  product_catalogue: 
+    product_title: DeBertaCleanV2
+    product_description: DeBertaCleanV2
+    product_bullet_point: DeBertaCleanV2
+    product_brand: DeBertaCleanV2
+    product_color_name: DeBertaCleanV2
+  query: DeBertaCleanV2
+
+prepare:
+  train: prepare_train_all
+  
+model:
+  name: microsoft/cocolm-base
+  architecture: CrossEncoderConcat
+  architecture_args:
+    num_text_types: 8
+    extra_feats_num: 1
+    linear_hidden_size: 128
+  encode:
+    query: 14890
+    product_title: 10253   # title
+    product_id: 5763 # ASIN
+    index: 6554 # index
+    product_description: 29172 # description
+    product_bullet_point: 32261 # summary
+    product_brand: 10643 # brand
+    product_color_name: 11890 # color
+
+optimizer:
+  version: "transformers.AdamW"
+  weight_decay: 0.01
+  args:
+    lr: 1e-5
+  scheduler:
+    use: true
+    version: cosine_with_hard_restarts_schedule_with_warmup
+    args:
+      num_warmup_steps: 500
+      num_training_steps: 47000
+      num_cycles: 1
+
+dataloader:
+  batch_size: 
+    train: 32
+    val: 32
+    test: 48
+  num_workers: 32
+
+experiment:
+  saver:
+    save_top_k: 2
+    mode: "max"
+
+trainer:
+  gpus: 2
+  auto_select_gpus: true
+  max_epochs: 2
+  val_check_interval: 0.5 # check val 20% of epoch
+  precision: bf16
+  amp_backend: native
