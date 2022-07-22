@@ -1,5 +1,5 @@
 # KDD-Cup-2022-Amazon
-This repository is the team ETS-Lab's solution for Amazon KDD Cup 2022. A full description and trained models will update soon. 
+This repository is the team ETS-Lab's solution for Amazon KDD Cup 2022. A full description and trained models will update soon. You can find our code submission [here](https://gitlab.aicrowd.com/wufanyou/kdd_task_2).
 
 
 #### General solution
