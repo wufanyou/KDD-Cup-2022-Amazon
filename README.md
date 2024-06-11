@@ -4,9 +4,9 @@ This repository is the team ETS-Lab's solution for Amazon KDD Cup 2022. You can 
 
 #### General solution
 
-* We trained __6 cross encoder models__ for each language which differs in the pertained models, training method (e.g., knowledge distillation), and data splitting. In total, six identical models (2 folds x 3 models) are used to produce the initial prediction (4 class probability) of the query-product pair. In use those models only, the public set score for task 2 is around __0.816__.
+* We trained __6 cross encoder models__ for each language which differs in the pertained models, training method (e.g., knowledge distillation), and data splitting. In total, six identical models (2 folds x 3 models) are used to produce the initial prediction (4 class probability) of the query-product pair. Using those models only, the public set score for task 2 is around __0.816__.
 
-* For Task 1, we used the output 4 class probability with some simple features to train a lightgbm model, calculate the __expected gain__ ($P_e*1 + P_s*0.1 + P_c*0.01$), and sort the query-product list by this gain.
+* For Task 1, we used the output 4 class probability with some simple features to train a lightgbm model, calculate the __expected gain__ ($P_e\*1 + P_s\*0.1 + P_c\*0.01$), and sort the query-product list by this gain.
 
 * For task 2 and Task 3, we used lightgbm to fuse those prediction with __some important features__. Most important features are designed based on the potential data leakage from task 1 and the behavior of the query-product group:
     * The stats (min, medium and max) of the cross encoder output probability grouped by query_id (0.007+ in Task 2 Public Leaderboard)
